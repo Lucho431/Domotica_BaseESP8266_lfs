@@ -266,6 +266,7 @@ void luz_handler(void){
                 if (LDR_val < 256){
                     digitalWrite(PIN_RELE, 1);
                     client.publish("Nodo_luzAfuera/Luz","1");
+                    luz_auto_on = 1;
                 }
             }//end if luz_auto_on
                     
@@ -360,7 +361,6 @@ void loop() {
     
     if (flag_tick){
         
-        //Serial.println("tick!!");
         if (reconnect_time) reconnect_time--;
         
         
