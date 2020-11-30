@@ -36,9 +36,14 @@ typedef enum{
 
 
 //variables red
+/*
 const char* ssid = "Arias2547";
 const char* password = "1142416109";
 const char* mqtt_server = "192.168.100.24";
+*/
+const char* ssid = "ESP8266_CU";
+const char* password = "RJQ-729!!";
+const char* mqtt_server = "192.168.4.1";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -183,8 +188,8 @@ void connections_handler() {
             
             Serial.print("Attempting MQTT connection...");
             // Create a random client ID
-            clientId = "Nodo_luzAfuera";
-            //clientId += String(random(0xffff), HEX);
+            //clientId = "Nodo_luzAfuera";
+            clientId += String(random(0xffff), HEX); //must be random because of the uMQTTbroker bug
             
             // Attempt to connect
             if (client.connect(clientId.c_str())) {
@@ -366,7 +371,7 @@ void loop() {
         
         if (conn_status == ALL_CONNECTED){
             
-            /*lastMsg++;
+            lastMsg++;
             if (lastMsg>200){
                 ++value;
                 snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
@@ -374,7 +379,7 @@ void loop() {
                 Serial.println(msg);
                 client.publish("Hola", msg);
                 lastMsg = 0;
-            }*/
+            }
         }//end if conn_status
         
         if (!flag_lecturas){
