@@ -370,7 +370,7 @@ void loop() {
         
         
         if (conn_status == ALL_CONNECTED){
-            
+            /*
             lastMsg++;
             if (lastMsg>200){
                 ++value;
@@ -379,7 +379,7 @@ void loop() {
                 Serial.println(msg);
                 client.publish("Hola", msg);
                 lastMsg = 0;
-            }
+            }*/
         }//end if conn_status
         
         if (!flag_lecturas){
