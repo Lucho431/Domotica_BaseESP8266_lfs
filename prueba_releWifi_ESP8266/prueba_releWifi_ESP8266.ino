@@ -74,7 +74,7 @@ int ilum; //iluminacion sensada
 
 //variables de funcionamiento
 T_MODE op_mode = MANUAL;
-uint8_t luz_auto_on = 0;
+volatile uint8_t luz_auto_on = 0;
 
 
 //variables de entradas
@@ -93,6 +93,8 @@ void LDR_read (void){
  
     //ilum = ((long)(1024-V)*LDRmax*10)/((long)LDRmin*Rc*LDR_val);  //usar si LDR entre GND y A0 
     ilum = ((long)LDR_val*LDRmax*10)/((long)LDRmin*Rc*(1024-LDR_val));    //usar si LDR entre A0 y Vcc (como en el esquema anterior)
+    
+    Serial.println(String(LDR_val, DEC));
 }
 
 
@@ -249,6 +251,8 @@ void luz_handler(void){
     
     switch (op_mode){
         case AUTO:
+            digitalWrite(PIN_LED, 0);
+            //digitalWrite(BUILTIN_LED, 0);
             
             if (boton_manAuto == FALL){
                 op_mode = MANUAL;
@@ -263,13 +267,15 @@ void luz_handler(void){
             
             if (luz_auto_on){
                 if (LDR_val > 768){
-                    digitalWrite(PIN_RELE, 0);
+					digitalWrite(BUILTIN_LED, 1);
+                    //digitalWrite(PIN_RELE, 0);
                     client.publish("Nodo_luzAfuera/Luz","0");
                     luz_auto_on = 0;
                 }
             }else{
-                if (LDR_val < 256){
-                    digitalWrite(PIN_RELE, 1);
+                if (LDR_val < 356){
+                    digitalWrite(BUILTIN_LED, 0);
+                    //digitalWrite(PIN_RELE, 1);
                     client.publish("Nodo_luzAfuera/Luz","1");
                     luz_auto_on = 1;
                 }
@@ -279,6 +285,9 @@ void luz_handler(void){
         break;
         
         case MANUAL:
+            
+            digitalWrite(PIN_LED, 1);
+            //digitalWrite(BUILTIN_LED, 1);
             
             if (boton_manAuto == FALL){
                 op_mode = AUTO;
