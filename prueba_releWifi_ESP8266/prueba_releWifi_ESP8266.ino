@@ -6,10 +6,10 @@
 
 #define TICK_PERIOD     10 //en ms.
 
-#define PIN_LED     D1
+#define PIN_LED     D7
 #define PIN_TECLA_LUZ   D5
 #define PIN_AUTO_MAN    D6
-#define PIN_RELE    D2
+#define PIN_RELE    D8
 #define PIN_LDR     A0
 
 
@@ -267,15 +267,15 @@ void luz_handler(void){
             
             if (luz_auto_on){
                 if (LDR_val > 768){
-					digitalWrite(BUILTIN_LED, 1);
-                    //digitalWrite(PIN_RELE, 0);
+					//digitalWrite(BUILTIN_LED, 1);
+                    digitalWrite(PIN_RELE, 0);
                     client.publish("Nodo_luzAfuera/Luz","0");
                     luz_auto_on = 0;
                 }
             }else{
                 if (LDR_val < 356){
-                    digitalWrite(BUILTIN_LED, 0);
-                    //digitalWrite(PIN_RELE, 1);
+                    //digitalWrite(BUILTIN_LED, 0);
+                    digitalWrite(PIN_RELE, 1);
                     client.publish("Nodo_luzAfuera/Luz","1");
                     luz_auto_on = 1;
                 }
