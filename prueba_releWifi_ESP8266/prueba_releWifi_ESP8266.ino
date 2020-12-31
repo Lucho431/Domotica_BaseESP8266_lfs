@@ -69,6 +69,8 @@ const int LDRmin = 15;        //Resistencia a la luz (10 Lux) en KΩ
 const int Rc = 10;       //Resistencia calibracion en KΩ
 
 int LDR_val; //valor de lectura del LDR
+int LDR_H = 768; //umbral de valor alto
+int LDR_L = 356; //umbral de valor bajo
 int ilum; //iluminacion sensada
 
 
@@ -85,6 +87,17 @@ uint8_t last_teclaLuz = 0;
 uint8_t last_boton_manAuto = 0;
 T_INPUT teclaLuz;
 T_INPUT boton_manAuto;
+
+
+//variables con topicos MQTT
+char 	infoLuz[] = "Nodo_luzAfuera/Info/Luz",
+		infoLDR_H[] = "Nodo_luzAfuera/Info/LDR_H",
+		infoLDR_L[] = "Nodo_luzAfuera/Info/LDR_L",
+		cmdLuz[] = "Nodo_luzAfuera/Cmd/Luz",
+		cmdLRD_H[] = "Nodo_luzAfuera/Cmd/LDR_H",
+		cmdLRD_L[] = "Nodo_luzAfuera/Cmd/LDR_L";
+		
+
 
 
 
@@ -115,14 +128,48 @@ void timer_update(void){
 
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
+	Serial.print("Message arrived [");
+	Serial.print(topic);
+	Serial.print("] ");
+	for (int i = 0; i < length; i++) {
+		Serial.print((char)payload[i]);
+	}
+	Serial.println();
+	
+	
+	
+	String strTopic = topic;
+	String strComp = cmdLuz;
+	
+	if (strTopic.equals(strComp)){//si recibe por MQTT el comando de la luz
+		if (op_mode == MANUAL){//si está en MANUAL, entonces opero...
+			if ((char)payload[0] == '1'){
+				digitalWrite(PIN_RELE, 1);
+                client.publish(infoLuz,"1");
+			}else if ((char)payload[0] == '0'){
+				digitalWrite(PIN_RELE, 0);
+                client.publish(infoLuz,"0");
+			}
+		}	
+	} else{
+		
+		String strComp = cmdLRD_H;		
+		if (strTopic.equals(strComp)){
+			
+			LDR_H = atoi((char*)payload);
+		
+		} else {
+			
+			String strComp = cmdLRD_L;
+			if (strTopic.equals(strComp)){
+			
+			LDR_L = atoi((char*)payload);
+			
+			}
+		}
+	}
+	
+	
   // Switch on the LED if an 1 was received as first character
   /*if ((char)payload[0] == '1') {
     digitalWrite(BUILTIN_LED, LOW_L);   // Turn the LED on (Note that LOW_L is the voltage level
@@ -199,7 +246,7 @@ void connections_handler() {
                 // Once connected, publish an announcement...
                 client.publish("Hola", "Nodo_luzAfuera");
                 // ... and resubscribe
-                client.subscribe("Nodo_luzAfuera/#");
+                client.subscribe("Nodo_luzAfuera/Cmd/#");
                 
                 conn_status = ALL_CONNECTED;
                 
@@ -258,25 +305,25 @@ void luz_handler(void){
                 op_mode = MANUAL;
                 if (teclaLuz == LOW_L || teclaLuz == FALL){
                     digitalWrite(PIN_RELE, 1);
-                    client.publish("Nodo_luzAfuera/Luz","1");
+                    client.publish(infoLuz,"1");
                 }else{
                     digitalWrite(PIN_RELE, 0);
-                    client.publish("Nodo_luzAfuera/Luz","0");
+                    client.publish(infoLuz,"0");
                 }
             }//end if boton_manAuto
             
             if (luz_auto_on){
-                if (LDR_val > 768){
+                if (LDR_val > LDR_H){
 					//digitalWrite(BUILTIN_LED, 1);
                     digitalWrite(PIN_RELE, 0);
-                    client.publish("Nodo_luzAfuera/Luz","0");
+                    client.publish(infoLuz,"0");
                     luz_auto_on = 0;
                 }
             }else{
-                if (LDR_val < 356){
+                if (LDR_val < LDR_L){
                     //digitalWrite(BUILTIN_LED, 0);
                     digitalWrite(PIN_RELE, 1);
-                    client.publish("Nodo_luzAfuera/Luz","1");
+                    client.publish(infoLuz,"1");
                     luz_auto_on = 1;
                 }
             }//end if luz_auto_on
@@ -296,10 +343,10 @@ void luz_handler(void){
             
             if(teclaLuz == FALL){
                 digitalWrite(PIN_RELE, 1);
-                client.publish("Nodo_luzAfuera/Luz","1");
+                client.publish(infoLuz,"1");
             }else if (teclaLuz == RISE){
                 digitalWrite(PIN_RELE, 0);
-                client.publish("Nodo_luzAfuera/Luz","0");
+                client.publish(infoLuz,"0");
             }            
         break;
             
