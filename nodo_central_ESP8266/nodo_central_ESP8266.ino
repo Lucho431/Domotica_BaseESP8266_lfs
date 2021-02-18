@@ -84,6 +84,10 @@ public:
       data_str[length] = '\0';
       
       Serial.println("received topic '"+topic+"' with data '"+(String)data_str+"'");
+      
+      
+      
+      
     }
 };
 
@@ -148,6 +152,20 @@ uint8_t mode_selected = 0;
 uint8_t teclaLuz = 0;
 uint8_t teclaLuz_selected = 0;
 int LDR_actual = 512;
+
+
+//variables con topicos MQTT
+char 	infoLuz[] = "Info/Nodo_luzAfuera/Luz", // payloads: 1 = prendida, 0 = apagada.
+		infoLDR_H[] = "Info/Nodo_luzAfuera/LDR_H",
+		infoLDR_L[] = "Info/Nodo_luzAfuera/LDR_L",
+		
+		cmdLuz[] = "Cmd/Nodo_luzAfuera/Luz",
+		cmdLRD_H[] = "Cmd/Nodo_luzAfuera/LDR_H",
+		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L",
+		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask"; // peyloads: pregunta por: "S" = sensor, "L" = luz.
+//variable de MQTT
+uint8_t next_ask = 0;
+uint8_t status_askMQTT = 0;
 
 
 /************************************
@@ -592,6 +610,39 @@ void cmd_salvaPantalla (void){
 	
 }//fin cmd_salvaPantalla
 
+void periodicAskMQTT(){
+	
+	if (!next_ask){
+		switch(status_askMQTT){
+			case 1: //pregunta por el LDR
+				myBroker.publish(cmdAsk, "L");
+				next_ask = 200;
+				status_askMQTT = 1;
+			break;
+			
+			case 2: //pregunta por la tecla de la Luz.
+				myBroker.publish(cmdAsk, "T");
+				next_ask = 100;
+				status_askMQTT = 3;
+			break;
+			
+			case 3: //pregunta por el modo.
+				myBroker.publish(cmdAsk, "M");
+				next_ask = 100;
+				status_askMQTT = 1;
+			break;			
+			case 0:
+			default:
+			break;
+		}//fin switch
+	} else {
+		next_ask--;
+	}
+
+}//fin periodicAskMQTT
+
+
+
 
 void setup() {
 	
@@ -625,6 +676,10 @@ void loop() {
 				
 		if (reconnect_time) reconnect_time--;
 		
+		if (conn_status == ALL_CONNECTED){
+			periodicAskMQTT();
+		}
+		
         if (!flag_lecturas){
             for (uint8_t i = 0; i++; i < 4){
 				read_boton[i] = digitalRead(pin_boton[i]);
@@ -635,6 +690,7 @@ void loop() {
         }	
 		
 		flag_tick = 0;
+		
 	}//end if flag_tick
 	
     connections_handler();

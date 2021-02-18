@@ -22,8 +22,8 @@ typedef enum{
 }T_CONN;
 
 typedef enum{
-    AUTO,
     MANUAL,
+    AUTO,
 }T_MODE;
 
 typedef enum{
@@ -36,15 +36,15 @@ typedef enum{
 
 
 //variables red
-/*
+
 const char* ssid = "Arias2547";
 const char* password = "1142416109";
 const char* mqtt_server = "192.168.100.24";
-*/
+/*
 const char* ssid = "ESP8266_CU";
 const char* password = "RJQ-729!!";
 const char* mqtt_server = "192.168.4.1";
-
+*/
 WiFiClient espClient;
 PubSubClient client(espClient);
 unsigned long lastMsg = 0;
@@ -96,7 +96,7 @@ char 	infoLuz[] = "Info/Nodo_luzAfuera/Luz", // payloads: 1 = prendida, 0 = apag
 		
 		cmdLuz[] = "Cmd/Nodo_luzAfuera/Luz",
 		cmdLRD_H[] = "Cmd/Nodo_luzAfuera/LDR_H",
-		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L";
+		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L",
 		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask"; // peyloads: pregunta por: "S" = sensor, "L" = luz.
 		
 
@@ -109,7 +109,7 @@ void LDR_read (void){
     //ilum = ((long)(1024-V)*LDRmax*10)/((long)LDRmin*Rc*LDR_val);  //usar si LDR entre GND y A0 
     ilum = ((long)LDR_val*LDRmax*10)/((long)LDRmin*Rc*(1024-LDR_val));    //usar si LDR entre A0 y Vcc (como en el esquema anterior)
     
-    Serial.println(String(LDR_val, DEC));
+    //Serial.println(String(LDR_val, DEC));
 }
 
 
@@ -173,12 +173,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 				if (strTopic.equals(strComp)){
 					
 					switch(payload[0]){
-							case "S":
+							case 'L':
 								sprintf(msg, "%d", LDR_H);
 								client.publish(infoLDR_H, msg);
 								sprintf(msg, "%d", LDR_L);
 								client.publish(infoLDR_L, msg);
 							break;
+							
+							case 'T':
 							default:
 							break;
 					}//fin switch
