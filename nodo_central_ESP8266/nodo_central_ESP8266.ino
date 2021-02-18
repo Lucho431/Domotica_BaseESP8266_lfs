@@ -1,6 +1,8 @@
 #include <ESP8266WiFi.h>
 #include "uMQTTBroker.h"
-#include <LiquidCrystal.h>
+
+#include <hd44780.h>
+#include <hd44780ioClass/hd44780_pinIO.h> // Arduino pin i/o class header
 
 #define TICK_PERIOD     10 //en ms.
 #define RS 6 //CLK o SK
@@ -111,8 +113,8 @@ uint8_t flag_imprimir = 0;
 //variables de pantalla
 String renglon1, renglon2;
 
-LiquidCrystal lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
-
+//LiquidCrystal lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
+hd44780_pinIO lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
 
 //variables de entradas
 uint8_t flag_lecturas = 0;
@@ -141,7 +143,7 @@ uint16_t reconnect_time = 0; // 1 * 10ms
 
 
 //variables de la luz de afuera:
-uint8_t mode = 0;
+uint8_t mode = 0; //0 = MANUAL; 1 = AUTO
 uint8_t mode_selected = 0;
 uint8_t teclaLuz = 0;
 uint8_t teclaLuz_selected = 0;

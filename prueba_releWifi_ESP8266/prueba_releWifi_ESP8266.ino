@@ -90,12 +90,14 @@ T_INPUT boton_manAuto;
 
 
 //variables con topicos MQTT
-char 	infoLuz[] = "Nodo_luzAfuera/Info/Luz",
-		infoLDR_H[] = "Nodo_luzAfuera/Info/LDR_H",
-		infoLDR_L[] = "Nodo_luzAfuera/Info/LDR_L",
-		cmdLuz[] = "Nodo_luzAfuera/Cmd/Luz",
-		cmdLRD_H[] = "Nodo_luzAfuera/Cmd/LDR_H",
-		cmdLRD_L[] = "Nodo_luzAfuera/Cmd/LDR_L";
+char 	infoLuz[] = "Info/Nodo_luzAfuera/Luz", // payloads: 1 = prendida, 0 = apagada.
+		infoLDR_H[] = "Info/Nodo_luzAfuera/LDR_H",
+		infoLDR_L[] = "Info/Nodo_luzAfuera/LDR_L",
+		
+		cmdLuz[] = "Cmd/Nodo_luzAfuera/Luz",
+		cmdLRD_H[] = "Cmd/Nodo_luzAfuera/LDR_H",
+		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L";
+		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask"; // peyloads: pregunta por: "S" = sensor, "L" = luz.
 		
 
 
@@ -151,23 +153,40 @@ void callback(char* topic, byte* payload, unsigned int length) {
                 client.publish(infoLuz,"0");
 			}
 		}	
-	} else{
+	} else{//else 1
 		
 		String strComp = cmdLRD_H;		
 		if (strTopic.equals(strComp)){
 			
 			LDR_H = atoi((char*)payload);
 		
-		} else {
+		} else { //else 2
 			
 			String strComp = cmdLRD_L;
 			if (strTopic.equals(strComp)){
 			
 			LDR_L = atoi((char*)payload);
 			
-			}
-		}
-	}
+			} else {//else 3
+				
+				String strComp = cmdAsk;
+				if (strTopic.equals(strComp)){
+					
+					switch(payload[0]){
+							case "S":
+								sprintf(msg, "%d", LDR_H);
+								client.publish(infoLDR_H, msg);
+								sprintf(msg, "%d", LDR_L);
+								client.publish(infoLDR_L, msg);
+							break;
+							default:
+							break;
+					}//fin switch
+					
+				}//fin if cmdAsk
+			}//fin else 3
+		} //fin else 2
+	} //fin else 1
 	
 	
   // Switch on the LED if an 1 was received as first character
@@ -179,7 +198,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     digitalWrite(BUILTIN_LED, HIGH_L);  // Turn the LED off by making the voltage HIGH_L
   }*/
 
-}
+}//fin callback
 
 
 
@@ -246,7 +265,7 @@ void connections_handler() {
                 // Once connected, publish an announcement...
                 client.publish("Hola", "Nodo_luzAfuera");
                 // ... and resubscribe
-                client.subscribe("Nodo_luzAfuera/Cmd/#");
+                client.subscribe("Cmd/Nodo_luzAfuera/#");
                 
                 conn_status = ALL_CONNECTED;
                 
