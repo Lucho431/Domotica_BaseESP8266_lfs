@@ -4,6 +4,8 @@
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_pinIO.h> // Arduino pin i/o class header
 
+#define MSG_BUFFER_SIZE 50
+
 #define TICK_PERIOD     10 //en ms.
 #define RS 6 //CLK o SK
 #define EN 7 //SD0 o S0
@@ -23,6 +25,7 @@ void cmd_contraste (void);
 void cmd_salvaPantalla (void);
 void cmd_tecla (void);
 
+void callback_MQTT (String, char[]);
 
 
 typedef struct t_menu_general {
@@ -62,12 +65,24 @@ typedef enum{
 } T_ESTATUS_PANTALLA;
 	
 
+
 /*
  * Custom broker class with overwritten callback functions
  */
 class myMQTTBroker: public uMQTTBroker
 {
+	
+	void (*MQTTCallBack) (String, char[]);
+	
+	
 public:
+
+	myMQTTBroker ( void (*pFunction) (String, char[]) ){
+		
+		MQTTCallBack = pFunction;
+				
+	}
+
     virtual bool onConnect(IPAddress addr, uint16_t client_count) {
       Serial.println(addr.toString()+" connected");
       return true;
@@ -79,16 +94,16 @@ public:
     }
     
     virtual void onData(String topic, const char *data, uint32_t length) {
-      char data_str[length+1];
-      os_memcpy(data_str, data, length);
-      data_str[length] = '\0';
+		char data_str[length+1];
+		os_memcpy(data_str, data, length);
+		data_str[length] = '\0';
       
-      Serial.println("received topic '"+topic+"' with data '"+(String)data_str+"'");
-      
-      
-      
-      
-    }
+		Serial.println("received topic '"+topic+"' with data '"+(String)data_str+"'");
+		
+		//callback_MQTT(topic, data_str);
+		MQTTCallBack(topic, data_str);
+		
+	}//fin onData
 };
 
 
@@ -116,7 +131,6 @@ uint8_t flag_imprimir = 0;
 
 //variables de pantalla
 String renglon1, renglon2;
-
 //LiquidCrystal lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
 hd44780_pinIO lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
 
@@ -133,8 +147,9 @@ char ssid[] = "ESP8266_CU";      // your network SSID (name)
 char pass[] = "RJQ-729!!"; // your network password
 bool WiFiAP = true;      // Do yo want the ESP as AP? (useless)
 
-myMQTTBroker myBroker;
+myMQTTBroker myBroker(callback_MQTT);
 
+char msg[MSG_BUFFER_SIZE];
 
 //variables timer
 uint8_t flag_tick = 0;
@@ -148,24 +163,29 @@ uint16_t reconnect_time = 0; // 1 * 10ms
 
 //variables de la luz de afuera:
 uint8_t mode = 0; //0 = MANUAL; 1 = AUTO
-uint8_t mode_selected = 0;
+uint8_t mode_selected = 0; //en que modo esta actualiemnte
 uint8_t teclaLuz = 0;
-uint8_t teclaLuz_selected = 0;
+uint8_t teclaLuz_selected = 0; //que tecla está actualmente
 int LDR_actual = 512;
+
 
 
 //variables con topicos MQTT
 char 	infoLuz[] = "Info/Nodo_luzAfuera/Luz", // payloads: 1 = prendida, 0 = apagada.
 		infoLDR_H[] = "Info/Nodo_luzAfuera/LDR_H",
 		infoLDR_L[] = "Info/Nodo_luzAfuera/LDR_L",
+		infoModo[] = "Info/Nodo_luzAfuera/Modo", //payloads: 0 = MANUAL; 1 = AUTO. 
+		infoLDR_val[] = "Info/Nodo_luzAfuera/LDR_val",
 		
 		cmdLuz[] = "Cmd/Nodo_luzAfuera/Luz",
 		cmdLRD_H[] = "Cmd/Nodo_luzAfuera/LDR_H",
 		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L",
-		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask"; // peyloads: pregunta por: "S" = sensor, "L" = luz.
+		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask", // payloads: pregunta por: "S" = sensor, "L" = luz.
+		cmdModo[] = "Info/Nodo_luzAfuera/Modo";
 //variable de MQTT
 uint8_t next_ask = 0;
-uint8_t status_askMQTT = 0;
+uint8_t status_askMQTT = 1;
+
 
 
 /************************************
@@ -173,6 +193,40 @@ uint8_t status_askMQTT = 0;
 *		FUNCIONES
 *
 ************************************/
+
+void callback_MQTT (String topic, char data_str[]){
+	
+	String strComp = infoLDR_val;
+	if (topic.equals(strComp)){//si recibe por MQTT info LDR_val
+		
+		LDR_actual = atoi((char*)data_str);
+		Serial.println("Se actualizó el LDR_actual");
+		
+	} else {//else 1
+		
+		String strComp = infoLuz;
+		if (topic.equals(strComp)){//si recibe por MQTT info de la luz
+			
+			teclaLuz_selected = (uint8_t) (data_str[0] - '0');
+			Serial.println("tocaron la tecla de luz");
+							
+		} else {//else 2
+			
+			String strComp = infoModo;
+			if (topic.equals(strComp)){//si recibe por MQTT info del modo de funcionamiento
+				
+				mode_selected = (uint8_t) (data_str[0] - '0');
+				Serial.println("cambió el modo de funcionamiento");
+				
+			}
+			
+		}//fin else 2
+		
+	}//fin else 1
+	
+}
+
+
 
 void connections_handler() {
     
@@ -260,11 +314,18 @@ void timer_update(void){
 
 void imprime_pantalla (void){
 	
+	/*
 	lcd.clear();
 	lcd.setCursor(0,0);
 	lcd.print(renglon1);
 	lcd.setCursor(0,1);
 	lcd.print(renglon2);
+	*/
+	
+	Serial.println(renglon1);
+	Serial.println(renglon2);
+	Serial.println("");	
+	
 }//fin imprime_pantalla
 
 void teclas(void){
@@ -613,6 +674,7 @@ void cmd_salvaPantalla (void){
 void periodicAskMQTT(){
 	
 	if (!next_ask){
+		Serial.println("preguntando...");
 		switch(status_askMQTT){
 			case 1: //pregunta por el LDR
 				myBroker.publish(cmdAsk, "L");
@@ -657,7 +719,7 @@ void setup() {
 	
 	connections_handler();
 	
-	lcd.begin(16, 2);
+	//lcd.begin(16, 2);
 	
 	menuActual = &listaMenus[0];
 	
@@ -673,12 +735,15 @@ void loop() {
 	timer_update();	
 	
 	if (flag_tick){
+		
 				
 		if (reconnect_time) reconnect_time--;
+		
 		
 		if (conn_status == ALL_CONNECTED){
 			periodicAskMQTT();
 		}
+		
 		
         if (!flag_lecturas){
             for (uint8_t i = 0; i++; i < 4){

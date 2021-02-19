@@ -22,7 +22,7 @@ typedef enum{
 }T_CONN;
 
 typedef enum{
-    MANUAL,
+    MANUAL = 0,
     AUTO,
 }T_MODE;
 
@@ -36,15 +36,15 @@ typedef enum{
 
 
 //variables red
-
+/*
 const char* ssid = "Arias2547";
 const char* password = "1142416109";
 const char* mqtt_server = "192.168.100.24";
-/*
+*/
 const char* ssid = "ESP8266_CU";
 const char* password = "RJQ-729!!";
 const char* mqtt_server = "192.168.4.1";
-*/
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 unsigned long lastMsg = 0;
@@ -93,12 +93,14 @@ T_INPUT boton_manAuto;
 char 	infoLuz[] = "Info/Nodo_luzAfuera/Luz", // payloads: 1 = prendida, 0 = apagada.
 		infoLDR_H[] = "Info/Nodo_luzAfuera/LDR_H",
 		infoLDR_L[] = "Info/Nodo_luzAfuera/LDR_L",
+		infoLDR_val[] = "Info/Nodo_luzAfuera/LDR_val",
+		infoModo[] = "Info/Nodo_luzAfuera/Modo", //payloads: 0 = MANUAL; 1 = AUTO.
 		
 		cmdLuz[] = "Cmd/Nodo_luzAfuera/Luz",
 		cmdLRD_H[] = "Cmd/Nodo_luzAfuera/LDR_H",
 		cmdLRD_L[] = "Cmd/Nodo_luzAfuera/LDR_L",
-		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask"; // peyloads: pregunta por: "S" = sensor, "L" = luz.
-		
+		cmdAsk[] = "Cmd/Nodo_luzAfuera/Ask", // payloads: pregunta por: "S" = sensor, "L" = luz.
+		cmdModo[] = "Info/Nodo_luzAfuera/Modo";	
 
 
 
@@ -155,38 +157,48 @@ void callback(char* topic, byte* payload, unsigned int length) {
 		}	
 	} else{//else 1
 		
-		String strComp = cmdLRD_H;		
+		String strComp = cmdModo;		
 		if (strTopic.equals(strComp)){
-			
-			LDR_H = atoi((char*)payload);
+			if ((char)payload[0] == '0'){
+				op_mode = MANUAL;//pongo op_mode en manual
+                client.publish(infoModo,"0");
+			}else if ((char)payload[0] == '1'){
+				op_mode = AUTO;//pongo op_mode en auto
+                client.publish(infoModo,"1");
+			}
+		} else {//else 2
 		
-		} else { //else 2
-			
-			String strComp = cmdLRD_L;
+			String strComp = cmdLRD_H;		
 			if (strTopic.equals(strComp)){
-			
-			LDR_L = atoi((char*)payload);
-			
-			} else {//else 3
 				
-				String strComp = cmdAsk;
+				LDR_H = atoi((char*)payload);
+			
+			} else { //else 3
+				
+				String strComp = cmdLRD_L;
 				if (strTopic.equals(strComp)){
+				
+				LDR_L = atoi((char*)payload);
+				
+				} else {//else 4
 					
-					switch(payload[0]){
-							case 'L':
-								sprintf(msg, "%d", LDR_H);
-								client.publish(infoLDR_H, msg);
-								sprintf(msg, "%d", LDR_L);
-								client.publish(infoLDR_L, msg);
-							break;
-							
-							case 'T':
-							default:
-							break;
-					}//fin switch
-					
-				}//fin if cmdAsk
-			}//fin else 3
+					String strComp = cmdAsk;
+					if (strTopic.equals(strComp)){
+						
+						switch(payload[0]){
+								case 'L':
+									sprintf(msg, "%d", LDR_val);
+									client.publish(infoLDR_val, msg);									
+								break;
+								
+								case 'T':
+								default:
+								break;
+						}//fin switch
+						
+					}//fin if cmdAsk
+				}//fin else 4
+			} //fin else 3
 		} //fin else 2
 	} //fin else 1
 	
@@ -324,6 +336,7 @@ void luz_handler(void){
             
             if (boton_manAuto == FALL){
                 op_mode = MANUAL;
+                client.publish(infoModo,"0");
                 if (teclaLuz == LOW_L || teclaLuz == FALL){
                     digitalWrite(PIN_RELE, 1);
                     client.publish(infoLuz,"1");
@@ -359,6 +372,7 @@ void luz_handler(void){
             
             if (boton_manAuto == FALL){
                 op_mode = AUTO;
+                client.publish(infoModo,"1");
                 break;
             }
             
