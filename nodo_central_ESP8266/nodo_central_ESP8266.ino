@@ -1,18 +1,24 @@
+#include <LiquidCrystal_I2C.h>
 #include <ESP8266WiFi.h>
 #include "uMQTTBroker.h"
 
+/*
 #include <hd44780.h>
 #include <hd44780ioClass/hd44780_pinIO.h> // Arduino pin i/o class header
+*/
 
 #define MSG_BUFFER_SIZE 50
-
+#define LCD_DIR 	0x3F
 #define TICK_PERIOD     10 //en ms.
+/*
 #define RS 6 //CLK o SK
 #define EN 7 //SD0 o S0
 #define L_D4 11 //CMD o SC
 #define L_D5 8 //SD1 Oo S1
 #define L_D6 9 //SD2 o S2
 #define L_D7 10 //SD3 o S3
+*/
+
 #define PIN_UP 14 //D5
 #define PIN_DOWN 12 //D6
 #define PIN_LEFT 13 //D7
@@ -132,7 +138,7 @@ uint8_t flag_imprimir = 0;
 //variables de pantalla
 String renglon1, renglon2;
 //LiquidCrystal lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
-hd44780_pinIO lcd(RS,EN,L_D4,L_D5,L_D6,L_D7);
+LiquidCrystal_I2C lcd(LCD_DIR,16,2);  //iniciacion del lcd de 16x2
 
 //variables de entradas
 uint8_t flag_lecturas = 0;
@@ -314,17 +320,18 @@ void timer_update(void){
 
 void imprime_pantalla (void){
 	
-	/*
+	
 	lcd.clear();
 	lcd.setCursor(0,0);
 	lcd.print(renglon1);
 	lcd.setCursor(0,1);
 	lcd.print(renglon2);
-	*/
 	
+	/*
 	Serial.println(renglon1);
 	Serial.println(renglon2);
 	Serial.println("");	
+	*/
 	
 }//fin imprime_pantalla
 
@@ -719,7 +726,8 @@ void setup() {
 	
 	connections_handler();
 	
-	//lcd.begin(16, 2);
+	lcd.init(); // initialize the lcd 
+	lcd.backlight();
 	
 	menuActual = &listaMenus[0];
 	
