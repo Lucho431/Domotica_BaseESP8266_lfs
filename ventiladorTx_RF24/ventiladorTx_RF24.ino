@@ -39,8 +39,8 @@ RF24 radio(pinCE, pinCSN);
 
 
 //variables de entradas:
-T_BOTON_ENUM index_boton = VENT_0;
-
+//T_BOTON_ENUM index_boton = VENT_0;
+uint8_t flag_lecturas = 0;
 uint8_t read_boton[SIZEOF_BOTON_ENUM];
 uint8_t last_boton[SIZEOF_BOTON_ENUM];
 
@@ -66,13 +66,13 @@ void teclas(void){
 			if(last_boton[i]){
 				status_boton[i] = FALL;
 			}else{
-				boton_manAuto = LOW_L;
+				status_boton[i] = LOW_L;
 			}
 		}else{
-			if(last_boton_manAuto){
-				boton_manAuto = HIGH_L;
+			if(last_status_boton[i]){
+				status_boton[i] = HIGH_L;
 			}else{
-				boton_manAuto = RISE;
+				status_boton[i] = RISE;
 			}
 		} //end if read_boton
 		
@@ -153,6 +153,7 @@ void loop(void)
 	}//end if flag_tick
 	
 	teclas();
+	cmd_handler();
 	
    //radio.write(data, sizeof data);
    //delay(1000);
