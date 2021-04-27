@@ -127,7 +127,7 @@ void loop(void)
 {
 	if (radio.available())
 	{
-		int done = radio.read(data, sizeof data); 
+		radio.read(data, sizeof data); 
 		cmd_handler(data);
 		//Serial.println(data);
 	}
@@ -142,10 +142,11 @@ void loop(void)
 			}else{
 				digitalWrite(turnON_pin, 1);
 				turnON_pin = 0;
-			}
+			}//end if turnON_delay
+		}//end if turnON_pin
 		
 		flag_tick = 0;
-	}//end flag_tick
+	}//end if flag_tick
    
    
 }

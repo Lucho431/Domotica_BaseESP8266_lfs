@@ -60,7 +60,7 @@ char data;
 
 void teclas(void){
         
-    for(T_BOTON_ENUM i = VENT_0; i < SIZEOF_BOTON_ENUM; i++){
+    for(uint8_t i = VENT_0; i < SIZEOF_BOTON_ENUM; i++){
 	
 		if(!read_boton[i]){
 			if(last_boton[i]){
@@ -69,7 +69,7 @@ void teclas(void){
 				status_boton[i] = LOW_L;
 			}
 		}else{
-			if(last_status_boton[i]){
+			if(last_boton[i]){
 				status_boton[i] = HIGH_L;
 			}else{
 				status_boton[i] = RISE;
