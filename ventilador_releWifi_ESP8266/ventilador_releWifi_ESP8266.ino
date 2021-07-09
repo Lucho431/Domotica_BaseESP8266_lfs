@@ -58,7 +58,7 @@ char 	infoLuz[] = "Info/Nodo_ventilador/Luz", // payloads: 1 = prendida, 0 = apa
 		infoVent[] = "Info/Nodo_ventilador/Vent",
 		
 		cmdLuz[] = "Cmd/Nodo_ventilador/Luz",
-		cmdVent[] = "Cmd/Nodo_ventilador/Vent", // payloads: pregunta por: "S" = sensor, "L" = luz.
+		cmdVent[] = "Cmd/Nodo_ventilador/Vent"; // payloads: pregunta por: "S" = sensor, "L" = luz.
 
 
 
