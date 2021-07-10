@@ -12,16 +12,16 @@
 #define L_D7 10 //SD3 o S3
 */
 
-#define IN_VENT0	D8
-#define IN_VENT1   D7
-#define IN_VENT2   D6
-#define IN_VENT3   D5
-#define IN_LUZ     D4
+#define IN_VENT0	15 //D8
+#define IN_VENT1   13 //D7
+#define IN_VENT2   12 //D6
+#define IN_VENT3   14 //D5
+#define IN_LUZ     2 //D4
 
-#define OUT_VENT1   D3
-#define OUT_VENT2   D2
-#define OUT_VENT3   D1
-#define OUT_LUZ     D0
+#define OUT_VENT1   0 //D3
+#define OUT_VENT2   4 //D2
+#define OUT_VENT3   5 //D1
+#define OUT_LUZ     16 //D0
 
 
 
@@ -248,17 +248,17 @@ void timer_update(void){
     
     if(now > last_tick + TICK_PERIOD){
         flag_tick = 1;
-        last_tick = now;        
+        last_tick = now;     
     }
 }
 
 
-void teclas(void){
-        
+void teclas(void){  
     for (uint8_t i = 0; i++; i < 5){
 		if(!read_boton[i]){
 			if(last_boton[i]){
 				boton[i]= FALL;
+				Serial.println("fall");
 			}else{
 				boton[i]= LOW_L;
 			}
@@ -313,7 +313,7 @@ void periodicAskMQTT(){
 
 
 void setup() {
-	
+
 	pinMode (IN_VENT0, INPUT_PULLUP);
 	pinMode (IN_VENT1, INPUT_PULLUP);
 	pinMode (IN_VENT2, INPUT_PULLUP);
@@ -325,7 +325,7 @@ void setup() {
     pinMode(OUT_VENT2, OUTPUT);
     pinMode(OUT_VENT3, OUTPUT);
     
-	
+
 	Serial.begin(115200);
 	Serial.println();
 	Serial.println();
@@ -337,7 +337,7 @@ void setup() {
 void loop() {
 	
 	timer_update();	
-	
+
 	if (flag_tick){
 		
 				
@@ -345,28 +345,28 @@ void loop() {
 		
 		
 		if (conn_status == ALL_CONNECTED){
-			periodicAskMQTT();
+			//periodicAskMQTT();
 		}
 		
-		
         if (!flag_lecturas){
-            for (uint8_t i = 0; i++; i < 5){
+            for (uint8_t i = 0; i < 5; i++){
 				read_boton[i] = digitalRead(pin_boton[i]);
 				flag_lecturas = 1;
-			}//end for
+			} //end for
         }else{
             flag_lecturas=0;
         }	
 		
 		flag_tick = 0;
 		
-	}//end if flag_tick
+	} //end if flag_tick
 	
     connections_handler();
     
     teclas();
     
-    if (boton[0] == FALL){
+  if (boton[0] == FALL){
+    Serial.println("luz");
 		if (!luzStatus){
 			myBroker.publish(cmdLuz, "1");
 			digitalWrite(OUT_LUZ, 0);
@@ -379,6 +379,7 @@ void loop() {
 	}
 	
 	if (boton[1] == FALL){
+    Serial.println("vent 0");
 		myBroker.publish(cmdVent, "0");
 		digitalWrite(OUT_VENT1, 1);
 		digitalWrite(OUT_VENT2, 1);
@@ -386,6 +387,7 @@ void loop() {
 	}
 	
 	if (boton[2] == FALL){
+    Serial.println("vent 1");
 		myBroker.publish(cmdVent, "1");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 1);
@@ -393,6 +395,7 @@ void loop() {
 	}	
 	
 	if (boton[3] == FALL){
+    Serial.println("vent 2");
 		myBroker.publish(cmdVent, "2");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 0);
@@ -401,6 +404,7 @@ void loop() {
 	
 	
 	if (boton[4] == FALL){
+    Serial.println("vent 3");
 		myBroker.publish(cmdVent, "3");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 0);
