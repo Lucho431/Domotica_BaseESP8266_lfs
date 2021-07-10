@@ -27,6 +27,11 @@ typedef enum{
 const char* ssid = "ESP8266_CU";
 const char* password = "tclpqtp123456";
 const char* mqtt_server = "192.168.4.1";
+/*
+const char* ssid = "TeleCentro-c078";
+const char* password = "tclpqtp123456";
+const char* mqtt_server = "192.168.4.1";
+*/
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -86,8 +91,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 	}
 	Serial.println();
 	
-	
-	
 	String strTopic = topic;
 	String strComp = cmdLuz;
 	
@@ -108,6 +111,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 					digitalWrite(PIN_VENT1, 0);
 					digitalWrite(PIN_VENT2, 0);
 					digitalWrite(PIN_VENT3, 0);
+					client.publish(infoVent,"0");
 				break;
 				case '1':
 					digitalWrite(PIN_VENT2, 0);
@@ -115,6 +119,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 					
 					turnON_delay = 10; // 100 ms
 					turnON_pin = PIN_VENT1;
+					
+					client.publish(infoVent,"1");
 				break;
 				case '2':
 					digitalWrite(PIN_VENT1, 0);
@@ -122,6 +128,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 					
 					turnON_delay = 10; // 100 ms
 					turnON_pin = PIN_VENT2;
+					
+					client.publish(infoVent,"2");
 				break;
 				case '3':
 					digitalWrite(PIN_VENT1, 0);
@@ -129,6 +137,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
 					
 					turnON_delay = 10; // 100 ms
 					turnON_pin = PIN_VENT3;
+					
+					client.publish(infoVent,"3");
 				default:
 				break;
 			} //fin switch		

@@ -1,5 +1,8 @@
 #include <ESP8266WiFi.h>
-#include "uMQTTBroker.h"
+#include <WiFiClient.h>
+#include <uMQTTBroker.h>
+#include <MQTT.h>
+
 
 #define MSG_BUFFER_SIZE 50
 #define TICK_PERIOD     10 //en ms.
@@ -12,13 +15,13 @@
 #define L_D7 10 //SD3 o S3
 */
 
-#define IN_VENT0	15 //D8
+#define IN_VENT0	0 //D3
 #define IN_VENT1   13 //D7
 #define IN_VENT2   12 //D6
 #define IN_VENT3   14 //D5
 #define IN_LUZ     2 //D4
 
-#define OUT_VENT1   0 //D3
+#define OUT_VENT1   15 //D8
 #define OUT_VENT2   4 //D2
 #define OUT_VENT3   5 //D1
 #define OUT_LUZ     16 //D0
@@ -95,8 +98,13 @@ T_INPUT boton[5]; //luz, vent0, vent1, vent2, vent3.
 
 
 //variables red
+/*
 char ssid[] = "ESP8266_CU";      // your network SSID (name)
 char pass[] = "tclpqtp123456"; // your network password
+*/
+const char* ssid = "ESP8266_CU";
+const char* password = "tclpqtp123456";
+
 bool WiFiAP = true;      // Do yo want the ESP as AP? (useless)
 
 myMQTTBroker myBroker(callback_MQTT);
@@ -135,34 +143,54 @@ uint8_t luzStatus = 0;
 ************************************/
 
 void callback_MQTT (String topic, char data_str[]){
-	/*
-	String strComp = infoLDR_val;
-	if (topic.equals(strComp)){//si recibe por MQTT info LDR_val
+	
+	String strComp = infoLuz;
+	if (topic.equals(strComp)){//si recibe por MQTT infoLuz
 		
-		LDR_actual = atoi((char*)data_str);
-		Serial.println("Se actualizó el LDR_actual");
+		if (data_str[0]=='1'){
+			digitalWrite(OUT_LUZ, 0);
+			Serial.println("luz prendida");
+		}else if (data_str[0]=='0'){
+			digitalWrite(OUT_LUZ, 1);
+			Serial.println("luz apagada");
+		}
 		
 	} else {//else 1
 		
-		String strComp = infoLuz;
+		String strComp = infoVent;
 		if (topic.equals(strComp)){//si recibe por MQTT info de la luz
 			
-			teclaLuz_selected = (uint8_t) (data_str[0] - '0');
-			Serial.println("tocaron la tecla de luz");
+			switch (data_str[0]){
+				case 0:
+					digitalWrite(OUT_VENT1, 1);
+					digitalWrite(OUT_VENT2, 1);
+					digitalWrite(OUT_VENT3, 1);	
+					Serial.println("ventilador apagado");			
+				break;
+				case 1:
+					digitalWrite(OUT_VENT1, 0);
+					digitalWrite(OUT_VENT2, 1);
+					digitalWrite(OUT_VENT3, 1);	
+					Serial.println("ventilador en 1");			
+				break;
+				case 2:
+					digitalWrite(OUT_VENT1, 0);
+					digitalWrite(OUT_VENT2, 0);
+					digitalWrite(OUT_VENT3, 1);
+					Serial.println("ventilador en 2");
+				break;
+				case 3:
+					digitalWrite(OUT_VENT1, 0);
+					digitalWrite(OUT_VENT2, 0);
+					digitalWrite(OUT_VENT3, 0);
+					Serial.println("ventilador en 3");
+				default:
+				break;				
+			} //fin switch
 							
-		} else {//else 2
-			
-			String strComp = infoModo;
-			if (topic.equals(strComp)){//si recibe por MQTT info del modo de funcionamiento
-				
-				mode_selected = (uint8_t) (data_str[0] - '0');
-				Serial.println("cambió el modo de funcionamiento");
-				
-			}
-			
-		}//fin else 2
+		}
 		
-	}//fin else 1*/
+	}//fin else 1
 	
 }
 
@@ -254,7 +282,7 @@ void timer_update(void){
 
 
 void teclas(void){  
-    for (uint8_t i = 0; i++; i < 5){
+    for (uint8_t i = 0; i < 5; i++){
 		if(!read_boton[i]){
 			if(last_boton[i]){
 				boton[i]= FALL;
@@ -313,7 +341,7 @@ void periodicAskMQTT(){
 
 
 void setup() {
-
+/*
 	pinMode (IN_VENT0, INPUT_PULLUP);
 	pinMode (IN_VENT1, INPUT_PULLUP);
 	pinMode (IN_VENT2, INPUT_PULLUP);
@@ -325,7 +353,12 @@ void setup() {
     pinMode(OUT_VENT2, OUTPUT);
     pinMode(OUT_VENT3, OUTPUT);
     
-
+    digitalWrite(OUT_LUZ, 1);
+    digitalWrite(OUT_VENT1, 1);
+    digitalWrite(OUT_VENT2, 1);
+    digitalWrite(OUT_VENT3, 1);    
+    
+*/
 	Serial.begin(115200);
 	Serial.println();
 	Serial.println();
@@ -366,20 +399,16 @@ void loop() {
     teclas();
     
   if (boton[0] == FALL){
-    Serial.println("luz");
 		if (!luzStatus){
 			myBroker.publish(cmdLuz, "1");
-			digitalWrite(OUT_LUZ, 0);
 			luzStatus = 1;
 		}else{
 			myBroker.publish(cmdLuz, "0");
-			digitalWrite(OUT_LUZ, 1);
 			luzStatus = 0;
 		}
 	}
 	
 	if (boton[1] == FALL){
-    Serial.println("vent 0");
 		myBroker.publish(cmdVent, "0");
 		digitalWrite(OUT_VENT1, 1);
 		digitalWrite(OUT_VENT2, 1);
@@ -387,7 +416,6 @@ void loop() {
 	}
 	
 	if (boton[2] == FALL){
-    Serial.println("vent 1");
 		myBroker.publish(cmdVent, "1");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 1);
@@ -395,7 +423,6 @@ void loop() {
 	}	
 	
 	if (boton[3] == FALL){
-    Serial.println("vent 2");
 		myBroker.publish(cmdVent, "2");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 0);
@@ -404,7 +431,6 @@ void loop() {
 	
 	
 	if (boton[4] == FALL){
-    Serial.println("vent 3");
 		myBroker.publish(cmdVent, "3");
 		digitalWrite(OUT_VENT1, 0);
 		digitalWrite(OUT_VENT2, 0);
