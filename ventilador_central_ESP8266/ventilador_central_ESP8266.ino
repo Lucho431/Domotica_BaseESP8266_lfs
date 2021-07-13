@@ -206,8 +206,7 @@ void connections_handler() {
             Serial.print("Starting access point.");
             Serial.println(ssid);
 
-            WiFi.mode(WIFI_AP);
-            if (!WiFi.mode(WIFI_AP)){
+            if (WiFi.softAP(ssid, password) != WL_CONNECTED){
                 Serial.print(".");
                 conn_status = WIFI_TIMING_OUT;
                 reconnect_time = 500;
