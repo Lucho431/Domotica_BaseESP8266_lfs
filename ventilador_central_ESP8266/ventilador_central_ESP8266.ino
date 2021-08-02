@@ -340,7 +340,7 @@ void periodicAskMQTT(){
 
 
 void setup() {
-/*
+
 	pinMode (IN_VENT0, INPUT_PULLUP);
 	pinMode (IN_VENT1, INPUT_PULLUP);
 	pinMode (IN_VENT2, INPUT_PULLUP);
@@ -357,7 +357,7 @@ void setup() {
     digitalWrite(OUT_VENT2, 1);
     digitalWrite(OUT_VENT3, 1);    
     
-*/
+
 	Serial.begin(115200);
 	Serial.println();
 	Serial.println();
@@ -383,10 +383,10 @@ void loop() {
         if (!flag_lecturas){
             for (uint8_t i = 0; i < 5; i++){
 				read_boton[i] = digitalRead(pin_boton[i]);
-				flag_lecturas = 1;
+				flag_lecturas = 5;
 			} //end for
         }else{
-            flag_lecturas=0;
+            flag_lecturas--;
         }	
 		
 		flag_tick = 0;
