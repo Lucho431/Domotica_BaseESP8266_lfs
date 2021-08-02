@@ -54,8 +54,12 @@ uint16_t reconnect_time = 0; // 1 * 10ms
 
 //variables cmd:
 uint8_t status_luz = 0;
+
 uint8_t turnON_delay = 0;
 uint8_t turnON_pin = 0;
+
+uint8_t last_turnON = 0;
+uint8_t turnOFF_last = 0;
 
 uint8_t luz_off[4] = {0xA0, 0x01, 0x00, 0xA1};
 uint8_t luz_on[4] = {0xA0, 0x01, 0x01, 0xA2};
@@ -129,63 +133,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
 		if (strTopic.equals(strComp)){
 			switch((char)payload[0]){
 				case '0':
-					/*
-					digitalWrite(PIN_VENT1, 0);
-					digitalWrite(PIN_VENT2, 0);
-					digitalWrite(PIN_VENT3, 0);
-					
-					Serial.print((char *)vent1_off);
-					Serial.print((char *)vent2_off);
-					Serial.print((char *)vent3_off); 
-					*/
-					for (int i = 0; i < 12; i++) {
-						Serial.print((char)vent_allOff[i]); 
-					}
+					turnOFF_handler();
 					client.publish(infoVent,"0");
 				break;
 				case '1':
-					/*
-					digitalWrite(PIN_VENT2, 0);
-					digitalWrite(PIN_VENT3, 0);
-					
-					Serial.print((char *)vent2_off);
-					Serial.print((char *)vent3_off);					
-					*/
-					for (int i = 0; i < 12; i++) {
-						Serial.print((char)vent_allOff[i]); 
-					}
+					turnOFF_handler();
 					turnON_delay = 10; // 100 ms
 					turnON_pin = 1;
 					
 					client.publish(infoVent,"1");
 				break;
 				case '2':
-					/*
-					digitalWrite(PIN_VENT1, 0);
-					digitalWrite(PIN_VENT3, 0);
-					
-					Serial.print((char *)vent1_off);
-					Serial.print((char *)vent3_off);
-					*/
-					for (int i = 0; i < 12; i++) {
-						Serial.print((char)vent_allOff[i]); 
-					}
+					turnOFF_handler();
 					turnON_delay = 10; // 100 ms
 					turnON_pin = 2;
 					
 					client.publish(infoVent,"2");
 				break;
 				case '3':
-					/*
-					digitalWrite(PIN_VENT1, 0);
-					digitalWrite(PIN_VENT2, 0);
-					
-					Serial.print((char *)vent1_off);
-					Serial.print((char *)vent2_off);
-					*/
-					for (int i = 0; i < 12; i++) {
-						Serial.print((char)vent_allOff[i]); 
-					}
+					turnOFF_handler();
 					turnON_delay = 10; // 100 ms
 					turnON_pin = 3;
 					
@@ -309,25 +275,55 @@ void connections_handler() {
     }//end switch
 }//end connections_handler
 
-
+void turnOFF_handler(){
+	uint8_t i;
+	
+	switch (last_turnON){
+		case 1:
+			for (i = 0; i < 4; i++){
+				Serial.print((char)vent1_off[i]); 
+			}
+		break;
+		case 2:
+			for (i = 0; i < 4; i++){
+				Serial.print((char)vent2_off[i]);
+			} 
+		break;
+		case 3:
+			for (i = 0; i < 4; i++){
+				Serial.print((char)vent3_off[i]); 
+			}
+		default:
+		break;
+	}
+	
+	last_turnON = 0;
+}
 
 void setup() {
     
     pinMode(BUILTIN_LED, OUTPUT);
-    /*
-    pinMode(PIN_LUZ, OUTPUT);
     
-    pinMode(PIN_VENT1, OUTPUT);
-    pinMode(PIN_VENT2, OUTPUT);
-    pinMode(PIN_VENT3, OUTPUT);
-    
-    digitalWrite(PIN_VENT1, 0);
-    digitalWrite(PIN_VENT2, 0);
-    digitalWrite(PIN_VENT3, 0);
-    */
-
     Serial.begin(115200);
     randomSeed(micros());
+
+	for (uint8_t i = 0; i < 4; i++){
+		Serial.print((char)luz_off[i]); 
+	}
+	delay(100);
+	for (uint8_t i = 0; i < 4; i++){
+		Serial.print((char)vent1_off[i]); 
+	}
+	delay(100);
+	for (uint8_t i = 0; i < 4; i++){
+		Serial.print((char)vent2_off[i]);
+	}
+	delay(100);
+	for (uint8_t i = 0; i < 4; i++){
+		Serial.print((char)vent3_off[i]); 
+	}
+	delay(100);
+    
     
     client.setServer(mqtt_server, 1883);
     client.setCallback(callback);
@@ -357,26 +353,29 @@ void loop() {
             }*/
         }//end if conn_status
         
+        
 		if (turnON_pin != 0){
 			if (turnON_delay){
 				turnON_delay--;
 			}else{
-				//digitalWrite(turnON_pin, 1);
 				switch (turnON_pin){
 					case 1:
 						for (int i = 0; i < 4; i++) {
 							Serial.print((char)vent1_on[i]); 
-						}					
+						}
+						last_turnON = 1;				
 					break;
 					case 2:
 						for (int i = 0; i < 4; i++) {
 							Serial.print((char)vent2_on[i]); 
 						}
+						last_turnON = 2;
 					break;
 					case 3:
 						for (int i = 0; i < 4; i++) {
 							Serial.print((char)vent3_on[i]); 
 						}
+						last_turnON = 3;
 					break;
 				}				
 				

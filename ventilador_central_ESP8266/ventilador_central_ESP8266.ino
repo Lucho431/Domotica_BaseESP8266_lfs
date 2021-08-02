@@ -91,7 +91,7 @@ public:
 
 //variables de entradas
 uint8_t flag_lecturas = 0;
-const uint8_t pin_boton[5] = {IN_LUZ, IN_VENT0, IN_VENT1, IN_VENT2, IN_VENT3};
+const uint16_t pin_boton[5] = {IN_LUZ, IN_VENT0, IN_VENT1, IN_VENT2, IN_VENT3};
 uint8_t read_boton[5] = {0, 0, 0, 0, 0}; //luz, vent0, vent1, vent2, vent3.
 uint8_t last_boton[5] = {0, 0, 0, 0, 0}; //luz, vent0, vent1, vent2, vent3.
 T_INPUT boton[5]; //luz, vent0, vent1, vent2, vent3.
