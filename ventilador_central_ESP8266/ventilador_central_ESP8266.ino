@@ -161,25 +161,25 @@ void callback_MQTT (String topic, char data_str[]){
 		if (topic.equals(strComp)){//si recibe por MQTT info de la luz
 			
 			switch (data_str[0]){
-				case 0:
+				case '0':
 					digitalWrite(OUT_VENT1, 1);
 					digitalWrite(OUT_VENT2, 1);
 					digitalWrite(OUT_VENT3, 1);	
 					Serial.println("ventilador apagado");			
 				break;
-				case 1:
-					digitalWrite(OUT_VENT1, 0);
-					digitalWrite(OUT_VENT2, 1);
-					digitalWrite(OUT_VENT3, 1);	
-					Serial.println("ventilador en 1");			
-				break;
-				case 2:
+				case '1': //reles cruzados: case 1 corresponde a velocidad 2.
 					digitalWrite(OUT_VENT1, 0);
 					digitalWrite(OUT_VENT2, 0);
-					digitalWrite(OUT_VENT3, 1);
-					Serial.println("ventilador en 2");
+					digitalWrite(OUT_VENT3, 1);	
+					Serial.println("ventilador en 2");			
 				break;
-				case 3:
+				case '2': //reles cruzados: case 2 corresponde a velocidad 1.
+					digitalWrite(OUT_VENT1, 0);
+					digitalWrite(OUT_VENT2, 1);
+					digitalWrite(OUT_VENT3, 1);
+					Serial.println("ventilador en 1");
+				break;
+				case '3':
 					digitalWrite(OUT_VENT1, 0);
 					digitalWrite(OUT_VENT2, 0);
 					digitalWrite(OUT_VENT3, 0);
@@ -397,7 +397,7 @@ void loop() {
     
     teclas();
     
-  if (boton[0] == FALL){
+  if (boton[0] == FALL){ //tecla de luz
 		if (!luzStatus){
 			myBroker.publish(cmdLuz, "1");
 			luzStatus = 1;
@@ -407,33 +407,33 @@ void loop() {
 		}
 	}
 	
-	if (boton[1] == FALL){
+	if (boton[1] == FALL){ //velocidad 0
 		myBroker.publish(cmdVent, "0");
-		digitalWrite(OUT_VENT1, 1);
-		digitalWrite(OUT_VENT2, 1);
-		digitalWrite(OUT_VENT3, 1);
+		//digitalWrite(OUT_VENT1, 1);
+		//digitalWrite(OUT_VENT2, 1);
+		//digitalWrite(OUT_VENT3, 1);
 	}
 	
-	if (boton[2] == FALL){
-		myBroker.publish(cmdVent, "1");
-		digitalWrite(OUT_VENT1, 0);
-		digitalWrite(OUT_VENT2, 1);
-		digitalWrite(OUT_VENT3, 1);
+	if (boton[2] == FALL){ //velocidad 1
+		myBroker.publish(cmdVent, "2"); //intercambio de comando "2" por "1" de velocidad.
+		//digitalWrite(OUT_VENT1, 0);
+		//digitalWrite(OUT_VENT2, 1);
+		//digitalWrite(OUT_VENT3, 1);
 	}	
 	
-	if (boton[3] == FALL){
-		myBroker.publish(cmdVent, "2");
-		digitalWrite(OUT_VENT1, 0);
-		digitalWrite(OUT_VENT2, 0);
-		digitalWrite(OUT_VENT3, 1);
+	if (boton[3] == FALL){ //velocidad 2
+		myBroker.publish(cmdVent, "1"); //intercambio de comando "1" por "2" de velocidad.
+		//digitalWrite(OUT_VENT1, 0);
+		//digitalWrite(OUT_VENT2, 0);
+		//digitalWrite(OUT_VENT3, 1);
 	}	
 	
 	
 	if (boton[4] == FALL){
 		myBroker.publish(cmdVent, "3");
-		digitalWrite(OUT_VENT1, 0);
-		digitalWrite(OUT_VENT2, 0);
-		digitalWrite(OUT_VENT3, 0);
+		//digitalWrite(OUT_VENT1, 0);
+		//digitalWrite(OUT_VENT2, 0);
+		//digitalWrite(OUT_VENT3, 0);
 	}	
     
 	
