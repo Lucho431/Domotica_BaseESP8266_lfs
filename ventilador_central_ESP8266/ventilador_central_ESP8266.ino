@@ -148,10 +148,10 @@ void callback_MQTT (String topic, char data_str[]){
 	if (topic.equals(strComp)){//si recibe por MQTT infoLuz
 		
 		if (data_str[0]=='1'){
-			digitalWrite(OUT_LUZ, 0);
+			digitalWrite(OUT_LUZ, 1); //apaga el LED cunado se prende la luz.
 			Serial.println("luz prendida");
 		}else if (data_str[0]=='0'){
-			digitalWrite(OUT_LUZ, 1);
+			digitalWrite(OUT_LUZ, 0); //prende el LED cuando se apaga la luz.
 			Serial.println("luz apagada");
 		}
 		
